@@ -21,3 +21,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add all the JavaScript from the artifact here
 });
+// Add audio elements
+const correctSound = new Audio('path/to/correct.mp3');
+const incorrectSound = new Audio('path/to/incorrect.mp3');
+
+// Play in checkAnswer function
+if (answer === correctAnswer) {
+    correctSound.play();
+}
