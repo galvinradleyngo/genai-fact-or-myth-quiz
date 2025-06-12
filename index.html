@@ -5,12 +5,647 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GenAI: Fact or Myth? Quiz</title>
     <meta name="description" content="Test your knowledge about Generative AI with this interactive quiz">
-    <link rel="stylesheet" href="assets/styles.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0px, 0px) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+            100% { transform: translate(0px, 0px) rotate(360deg); }
+        }
+
+        #genai-game {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .floating-bg {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 2px, transparent 2px);
+            background-size: 50px 50px;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+        }
+
+        .game-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .icon-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            font-size: 36px;
+        }
+
+        .main-title {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin: 8px 0 0 0;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-tracker {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-dot.inactive {
+            background: #e2e8f0;
+        }
+
+        .progress-dot.correct {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .progress-dot.incorrect {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+
+        .progress-line {
+            width: 40px;
+            height: 2px;
+            background: #e2e8f0;
+            border-radius: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.5s ease;
+        }
+
+        .question-container {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .question-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .question-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.4;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .quiz-button {
+            flex: 1;
+            max-width: 180px;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            transform: translateY(0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .fact-button {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .myth-button {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        .quiz-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .quiz-button:active {
+            transform: translateY(0px);
+        }
+
+        .quiz-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: translateY(0px);
+        }
+
+        .feedback {
+            display: none;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border: 1px solid #10b981;
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border: 1px solid #ef4444;
+        }
+
+        .feedback-result {
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .feedback-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #475569;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .next-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+            transform: translateY(0);
+        }
+
+        .next-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .results-container {
+            display: none;
+            text-align: center;
+            padding: 32px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 16px;
+            margin-top: 24px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .results-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .results-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #1e293b;
+        }
+
+        .results-score {
+            font-size: 20px;
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+
+        .score-highlight {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .results-message {
+            font-size: 16px;
+            color: #475569;
+            margin-bottom: 24px;
+        }
+
+        .restart-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+            display: none;
+        }
+
+        .restart-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .question {
+            display: none;
+        }
+
+        .question.active {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            #genai-game {
+                margin: 16px;
+                padding: 20px;
+            }
+            
+            .quiz-button {
+                font-size: 14px;
+                padding: 12px 16px;
+            }
+            
+            .main-title {
+                font-size: 24px;
+            }
+
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .quiz-button {
+                max-width: 200px;
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="genai-game">
-        <!-- Game content will be loaded here -->
+        <div class="floating-bg"></div>
+        
+        <div class="game-content">
+            <div class="header">
+                <div class="icon-container">🤖</div>
+                <h2 class="main-title">GenAI: Fact or Myth?</h2>
+                <p class="subtitle">Test your knowledge about Generative AI</p>
+            </div>
+            
+            <div class="game-container">
+                <div class="progress-tracker">
+                    <div id="dot1" class="progress-dot active"></div>
+                    <div class="progress-line">
+                        <div id="progress1" class="progress-fill"></div>
+                    </div>
+                    <div id="dot2" class="progress-dot inactive"></div>
+                    <div class="progress-line">
+                        <div id="progress2" class="progress-fill"></div>
+                    </div>
+                    <div id="dot3" class="progress-dot inactive"></div>
+                </div>
+                
+                <!-- Question 1 -->
+                <div id="q1" class="question active">
+                    <div class="question-container">
+                        <div class="question-header">
+                            <div class="question-number">1</div>
+                            <div class="question-text">GenAI tools can be used to produce videos, reports, presentations and games.</div>
+                        </div>
+                        
+                        <div class="button-container">
+                            <button id="fact1" class="quiz-button fact-button">
+                                <span>✓</span>
+                                <span>Fact</span>
+                            </button>
+                            <button id="myth1" class="quiz-button myth-button">
+                                <span>✗</span>
+                                <span>Myth</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="feedback1" class="feedback">
+                        <div id="result1" class="feedback-result"></div>
+                        <div class="feedback-text">
+                            Generative AI tools can indeed create a wide range of content including videos (like AI video generators), reports (like document generation using LLMs), presentations (like slide generation tools), and games (through code generation or asset creation). Companies like OpenAI, Google, and others offer products that can generate these types of content.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Question 2 -->
+                <div id="q2" class="question">
+                    <div class="question-container">
+                        <div class="question-header">
+                            <div class="question-number">2</div>
+                            <div class="question-text">All kinds of AI are Generative AI.</div>
+                        </div>
+                        
+                        <div class="button-container">
+                            <button id="fact2" class="quiz-button fact-button">
+                                <span>✓</span>
+                                <span>Fact</span>
+                            </button>
+                            <button id="myth2" class="quiz-button myth-button">
+                                <span>✗</span>
+                                <span>Myth</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="feedback2" class="feedback">
+                        <div id="result2" class="feedback-result"></div>
+                        <div class="feedback-text">
+                            This is a myth. Generative AI is just one type of AI that focuses on creating new content. There are many other types of AI such as discriminative AI (which classifies data), reinforcement learning (which learns through trial and error), expert systems (which use rules-based approaches), and many more. AI encompasses a broad range of technologies and approaches beyond just generative models.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Question 3 -->
+                <div id="q3" class="question">
+                    <div class="question-container">
+                        <div class="question-header">
+                            <div class="question-number">3</div>
+                            <div class="question-text">GenAI thinks like humans do.</div>
+                        </div>
+                        
+                        <div class="button-container">
+                            <button id="fact3" class="quiz-button fact-button">
+                                <span>✓</span>
+                                <span>Fact</span>
+                            </button>
+                            <button id="myth3" class="quiz-button myth-button">
+                                <span>✗</span>
+                                <span>Myth</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="feedback3" class="feedback">
+                        <div id="result3" class="feedback-result"></div>
+                        <div class="feedback-text">
+                            This is a myth. While GenAI can produce human-like outputs, it doesn't "think" like humans do. GenAI systems are based on statistical pattern recognition and mathematical models trained on large datasets. They don't have consciousness, intentions, or understanding in the human sense. They recognize patterns in data and generate outputs based on those patterns, without truly understanding context, meaning, or having experiences the way humans do.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="navigation">
+                    <button id="next-btn" class="next-button">
+                        <span>Next Question</span>
+                        <span style="margin-left: 8px;">→</span>
+                    </button>
+                </div>
+                
+                <div id="result-container" class="results-container">
+                    <div class="results-icon">🎉</div>
+                    <div class="results-title">Quiz Complete!</div>
+                    <div class="results-score">Your Score: <span id="final-score" class="score-highlight">0</span>/3</div>
+                    <div id="score-message" class="results-message"></div>
+                    <button id="restart-btn" class="restart-button">
+                        <span>🔄</span>
+                        <span style="margin-left: 8px;">Play Again</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <script src="assets/script.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentQuestion = 1;
+            let score = 0;
+            const answers = {
+                1: 'fact',
+                2: 'myth',
+                3: 'myth'
+            };
+            
+            // Add event listeners
+            document.getElementById('fact1').addEventListener('click', function() { checkAnswer(1, 'fact'); });
+            document.getElementById('myth1').addEventListener('click', function() { checkAnswer(1, 'myth'); });
+            document.getElementById('fact2').addEventListener('click', function() { checkAnswer(2, 'fact'); });
+            document.getElementById('myth2').addEventListener('click', function() { checkAnswer(2, 'myth'); });
+            document.getElementById('fact3').addEventListener('click', function() { checkAnswer(3, 'fact'); });
+            document.getElementById('myth3').addEventListener('click', function() { checkAnswer(3, 'myth'); });
+            document.getElementById('next-btn').addEventListener('click', nextQuestion);
+            document.getElementById('restart-btn').addEventListener('click', restartGame);
+            
+            function checkAnswer(questionNumber, answer) {
+                const feedbackDiv = document.getElementById('feedback' + questionNumber);
+                const resultDiv = document.getElementById('result' + questionNumber);
+                const factBtn = document.getElementById('fact' + questionNumber);
+                const mythBtn = document.getElementById('myth' + questionNumber);
+                const correctAnswer = answers[questionNumber];
+                const dotElement = document.getElementById('dot' + questionNumber);
+                const progressElement = document.getElementById('progress' + (questionNumber - 1));
+                
+                // Disable buttons
+                factBtn.disabled = true;
+                mythBtn.disabled = true;
+                
+                // Show feedback
+                feedbackDiv.style.display = 'block';
+                
+                if (answer === correctAnswer) {
+                    resultDiv.innerHTML = '<span style="color: #059669;">✓ Correct!</span>';
+                    feedbackDiv.className = 'feedback correct';
+                    dotElement.className = 'progress-dot correct';
+                    score++;
+                } else {
+                    resultDiv.innerHTML = '<span style="color: #dc2626;">✗ Incorrect</span>';
+                    feedbackDiv.className = 'feedback incorrect';
+                    dotElement.className = 'progress-dot incorrect';
+                }
+                
+                // Animate progress bar
+                if (progressElement) {
+                    progressElement.style.width = '100%';
+                }
+            }
+            
+            function nextQuestion() {
+                document.getElementById('q' + currentQuestion).classList.remove('active');
+                currentQuestion++;
+                
+                if (currentQuestion <= 3) {
+                    document.getElementById('q' + currentQuestion).classList.add('active');
+                    document.getElementById('dot' + currentQuestion).className = 'progress-dot active';
+                } else {
+                    showResults();
+                }
+            }
+            
+            function showResults() {
+                document.getElementById('result-container').style.display = 'block';
+                document.getElementById('final-score').textContent = score;
+                document.getElementById('next-btn').style.display = 'none';
+                document.getElementById('restart-btn').style.display = 'inline-block';
+                
+                const messageElement = document.getElementById('score-message');
+                if (score === 3) {
+                    messageElement.textContent = 'Perfect! You\'re a GenAI expert! 🌟';
+                    messageElement.style.color = '#059669';
+                } else if (score === 2) {
+                    messageElement.textContent = 'Great job! You know your GenAI facts! 👏';
+                    messageElement.style.color = '#0d9488';
+                } else if (score === 1) {
+                    messageElement.textContent = 'Good start! Keep learning about GenAI! 📚';
+                    messageElement.style.color = '#dc6d1f';
+                } else {
+                    messageElement.textContent = 'Time to brush up on GenAI knowledge! 💪';
+                    messageElement.style.color = '#dc2626';
+                }
+                
+                // Complete final progress bar
+                if (document.getElementById('progress2')) {
+                    document.getElementById('progress2').style.width = '100%';
+                }
+            }
+            
+            function restartGame() {
+                currentQuestion = 1;
+                score = 0;
+                
+                document.getElementById('result-container').style.display = 'none';
+                document.getElementById('next-btn').style.display = 'block';
+                document.getElementById('restart-btn').style.display = 'none';
+                
+                for (let i = 1; i <= 3; i++) {
+                    const questionEl = document.getElementById('q' + i);
+                    if (i === 1) {
+                        questionEl.classList.add('active');
+                    } else {
+                        questionEl.classList.remove('active');
+                    }
+                    
+                    const feedbackDiv = document.getElementById('feedback' + i);
+                    feedbackDiv.style.display = 'none';
+                    feedbackDiv.className = 'feedback';
+                    
+                    const factBtn = document.getElementById('fact' + i);
+                    const mythBtn = document.getElementById('myth' + i);
+                    factBtn.disabled = false;
+                    mythBtn.disabled = false;
+                    
+                    const dotElement = document.getElementById('dot' + i);
+                    if (i === 1) {
+                        dotElement.className = 'progress-dot active';
+                    } else {
+                        dotElement.className = 'progress-dot inactive';
+                    }
+                    
+                    if (i <= 2) {
+                        const progressEl = document.getElementById('progress' + i);
+                        if (progressEl) {
+                            progressEl.style.width = '0%';
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
